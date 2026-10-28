@@ -231,6 +231,7 @@ function copyCurrentCircleCode() {
 function renderMembersList(circle) {
   const container = document.getElementById('membersContainer');
   const members = circle.members || [];
+  const isOwner = currentUser && circle.owner_id === currentUser.id;
 
   if (members.length === 0) {
     container.innerHTML = `
@@ -298,12 +299,36 @@ function renderMembersList(circle) {
               <i class="fa-solid fa-phone"></i>
             </a>
           ` : ''}
+          ${isOwner && m.id !== currentUser.id ? `
+            <button onclick="confirmRemoveMember(${circle.id}, ${m.id}, '${m.nickname}')" class="text-[11px] text-ios-secondaryLabel hover:text-ios-red bg-slate-100 hover:bg-ios-red/10 px-2 py-1 rounded-lg transition font-medium" title="移出该成员">
+              移出
+            </button>
+          ` : ''}
         </div>
       </div>
     `;
   }).join('');
 
   container.innerHTML = memberRowsHtml;
+}
+
+async function confirmRemoveMember(circleId, memberId, nickname) {
+  if (!confirm(`确定要将成员「${nickname}」移出当前守护圈吗？`)) {
+    return;
+  }
+  try {
+    const res = await fetch(`/api/circles/${circleId}/members/${memberId}?operatorId=${currentUser.id}`, {
+      method: 'DELETE'
+    });
+    const data = await res.json();
+    alert(data.message);
+    if (data.success) {
+      await loadCircleDetails(circleId);
+      await loadUserData();
+    }
+  } catch (err) {
+    alert('操作失败');
+  }
 }
 
 // Trigger simulated unlock check-in

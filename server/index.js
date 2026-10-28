@@ -166,6 +166,16 @@ app.get('/api/circles/:id', (req, res) => {
   res.json({ success: true, circle: details });
 });
 
+// Remove a member from circle (owner or member self)
+app.delete('/api/circles/:circleId/members/:memberId', (req, res) => {
+  const circleId = parseInt(req.params.circleId);
+  const memberId = parseInt(req.params.memberId);
+  const operatorId = parseInt(req.query.operatorId || req.body?.operatorId || 1);
+
+  const result = services.removeCircleMember(circleId, memberId, operatorId);
+  res.json(result);
+});
+
 // --- Manual Test & Trigger APIs ---
 // Simulates an unlock ping for a given user
 app.post('/api/simulate-checkin', (req, res) => {

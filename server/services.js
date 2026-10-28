@@ -47,6 +47,10 @@ function seedDemoDataIfEmpty() {
       }
     }
 
+    // Clean up test users created during live test (e.g. 老妈)
+    db.prepare("DELETE FROM circle_members WHERE user_id IN (SELECT id FROM users WHERE nickname = '老妈')").run();
+    db.prepare("DELETE FROM users WHERE nickname = '老妈'").run();
+
     // Delete fake demo circles
     const fakeCircles = db.prepare("SELECT id FROM circles WHERE code IN ('666888', '520131')").all();
     for (const c of fakeCircles) {
@@ -254,6 +258,26 @@ function quickJoinCircle(code, nickname, deviceType = 'ios') {
   };
 }
 
+function removeCircleMember(circleId, memberId, operatorId) {
+  const circle = db.prepare('SELECT * FROM circles WHERE id = ?').get(circleId);
+  if (!circle) {
+    return { success: false, message: '圈子不存在' };
+  }
+
+  // Operator must be either the circle owner or the member themselves (leaving circle)
+  if (circle.owner_id !== operatorId && memberId !== operatorId) {
+    return { success: false, message: '只有圈主有权限移出成员' };
+  }
+
+  if (circle.owner_id === memberId) {
+    return { success: false, message: '圈主不能将自己移出圈子' };
+  }
+
+  db.prepare('DELETE FROM circle_members WHERE circle_id = ? AND user_id = ?').run(circleId, memberId);
+
+  return { success: true, message: '该成员已成功移出圈子' };
+}
+
 function getCircleDetailsWithMembers(circleId) {
   const circle = db.prepare('SELECT * FROM circles WHERE id = ?').get(circleId);
   if (!circle) return null;
@@ -364,6 +388,7 @@ module.exports = {
   createCircle,
   joinCircleByCode,
   quickJoinCircle,
+  removeCircleMember,
   getCircleDetailsWithMembers,
   checkAndGenerateAlerts
 };
