@@ -283,7 +283,7 @@ function renderMembersList(circle) {
           <div>
             <div class="flex items-center space-x-1.5">
               <span class="text-xs font-semibold text-ios-label">${m.nickname}</span>
-              ${m.id === currentUser.id ? '<span class="text-[9px] bg-ios-bg text-ios-secondaryLabel font-medium px-1.5 py-0.2 rounded-full">我</span>' : ''}
+              ${m.id === currentUser.id ? '<span class="text-[9px] bg-ios-blue text-white font-bold px-1.5 py-0.5 rounded-md shadow-2xs">本机 · 我</span>' : ''}
               <span class="text-[10px] text-ios-secondaryLabel">· ${m.device_type === 'ios' ? 'iPhone' : '安卓'}</span>
             </div>
             <div class="mt-1">
