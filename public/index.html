@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>活着么 - 守护每一次微光</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            ios: {
+              bg: '#F2F2F7',
+              card: '#FFFFFF',
+              grouped: '#FFFFFF',
+              separator: '#E5E5EA',
+              label: '#000000',
+              secondaryLabel: '#8E8E93',
+              tertiaryLabel: '#C7C7CC',
+              blue: '#007AFF',
+              green: '#34C759',
+              orange: '#FF9500',
+              red: '#FF3B30',
+              indigo: '#5856D6',
+              mint: '#00C7BE',
+              fill: '#767680',
+              fillQuaternary: 'rgba(116, 116, 128, 0.08)'
+            }
+          },
+          fontFamily: {
+            sans: ['-apple-system', 'BlinkMacSystemFont', '"SF Pro Display"', '"SF Pro Text"', '"PingFang SC"', '"Helvetica Neue"', 'sans-serif'],
+            mono: ['"SF Mono"', 'Menlo', 'monospace']
+          },
+          boxShadow: {
+            'ios-card': '0 2px 14px rgba(0, 0, 0, 0.04)',
+            'ios-elevated': '0 8px 30px rgba(0, 0, 0, 0.07)',
+            'ios-sheet': '0 -8px 40px rgba(0, 0, 0, 0.12)'
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body {
+      background-color: #F2F2F7;
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display", "SF Pro Text", "PingFang SC", "Helvetica Neue", sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      -webkit-font-smoothing: antialiased;
+    }
+    .safe-top {
+      padding-top: env(safe-area-inset-top, 12px);
+    }
+    .safe-bottom {
+      padding-bottom: env(safe-area-inset-bottom, 20px);
+    }
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+    /* Apple-like breathing pulse ring */
+    @keyframes apple-pulse {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(52, 199, 89, 0.4);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 10px rgba(52, 199, 89, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(52, 199, 89, 0);
+      }
+    }
+    .status-ring-active {
+      animation: apple-pulse 2.4s infinite cubic-bezier(0.4, 0, 0.6, 1);
+    }
+  </style>
+</head>
+<body class="min-h-screen text-slate-900 flex justify-center pb-24 select-none">
+
+  <!-- Mobile Viewport Container (Apple HIG Framed View) -->
+  <div class="w-full max-w-md bg-ios-bg min-h-screen flex flex-col relative shadow-2xl">
+
+    <!-- iOS Translucent Large Title Navigation Bar -->
+    <header class="sticky top-0 z-30 bg-ios-bg/85 backdrop-blur-xl border-b border-ios-separator/60 px-5 pt-3 pb-2.5 flex items-center justify-between safe-top">
+      <div>
+        <div class="flex items-center space-x-1.5">
+          <span class="w-2.5 h-2.5 rounded-full bg-ios-green inline-block"></span>
+          <h1 class="text-xl font-bold tracking-tight text-ios-label">活着么</h1>
+        </div>
+        <p class="text-[11px] text-ios-secondaryLabel font-medium">每日一次 · 手机充电即报平安</p>
+      </div>
+
+      <div class="flex items-center space-x-2">
+        <!-- Mobile QR Code Preview Button -->
+        <button onclick="openQrModal()" class="w-8 h-8 rounded-full bg-ios-fillQuaternary flex items-center justify-center text-ios-blue text-xs hover:bg-slate-200 transition border border-black/5" title="在手机上查看">
+          <i class="fa-solid fa-qrcode"></i>
+        </button>
+
+        <!-- iOS Style Segmented User Switcher -->
+        <div class="flex items-center space-x-1.5 bg-ios-fillQuaternary px-2.5 py-1 rounded-full border border-black/5">
+          <i class="fa-solid fa-person-circle-check text-xs text-ios-blue"></i>
+          <select id="userSelector" onchange="switchCurrentUser(this.value)" class="text-xs bg-transparent text-ios-label font-semibold outline-none cursor-pointer pr-1">
+            <option value="hzm_demo_me">我 (守护者)</option>
+            <option value="hzm_demo_mom">老妈</option>
+            <option value="hzm_demo_dad">老爸</option>
+            <option value="hzm_demo_friend">阿明 (搭子)</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Scrollable Stream -->
+    <main class="flex-1 px-4 py-4 space-y-4 overflow-y-auto">
+
+      <!-- HERO: Apple Health / Watch Activity Style Status Card -->
+      <div id="myStatusCard" class="bg-white rounded-3xl p-5 shadow-ios-card border border-black/[0.04] relative overflow-hidden transition-all duration-300">
+        <div class="flex items-start justify-between relative z-10">
+          
+          <!-- Left: User Identity & Live Ring -->
+          <div class="flex items-start space-x-3.5">
+            <div class="relative shrink-0 mt-0.5">
+              <div id="statusRing" class="w-13 h-13 w-12 h-12 rounded-2xl bg-ios-green/10 flex items-center justify-center text-2xl border border-ios-green/20">
+                <span id="userAvatar">🧑</span>
+              </div>
+              <span id="statusIndicatorDot" class="absolute -bottom-0.5 -right-0.5 w-3.5 h-3.5 rounded-full bg-ios-green border-2 border-white status-ring-active"></span>
+            </div>
+
+            <div class="space-y-1">
+              <div class="flex items-center space-x-1.5">
+                <h2 id="userName" class="text-base font-semibold text-ios-label">我 (守护者)</h2>
+                <span id="deviceBadge" class="text-[10px] font-medium bg-ios-bg text-ios-secondaryLabel px-2 py-0.5 rounded-full">
+                  iPhone · 充电自动化
+                </span>
+              </div>
+              <div id="statusTitle" class="text-sm font-semibold text-ios-green flex items-center gap-1.5 pt-0.5">
+                <i class="fa-solid fa-bolt-lightning text-xs"></i> <span>今日已充上电 (安全)</span>
+              </div>
+              <p id="statusDesc" class="text-xs text-ios-secondaryLabel">
+                09:14 手机连接电源触发打卡 · 全天静默免打扰
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card Bottom Action Row (Apple Health Button Style) -->
+        <div class="mt-4 pt-3.5 border-t border-ios-separator/60 flex items-center justify-between">
+          <div class="text-[11px] text-ios-secondaryLabel flex items-center space-x-1 font-medium">
+            <i class="fa-solid fa-shield-halved text-[10px] text-ios-blue"></i>
+            <span>无需解锁屏幕 · 每天插上充电线即完成</span>
+          </div>
+
+          <button onclick="triggerSimulatedUnlock()" class="bg-ios-bg hover:bg-slate-200/70 text-ios-blue active:scale-95 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-tight transition flex items-center space-x-1">
+            <i class="fa-solid fa-bolt text-[11px]"></i>
+            <span>模拟插上充电器</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Apple Inset Action Tiles -->
+      <div class="grid grid-cols-2 gap-3">
+        <button onclick="showSetupModal()" class="bg-white p-3.5 rounded-2xl shadow-ios-card border border-black/[0.04] text-left hover:bg-slate-50 active:scale-[0.99] transition space-y-1.5">
+          <div class="w-8 h-8 rounded-xl bg-ios-blue/10 flex items-center justify-center text-ios-blue text-sm">
+            <i class="fa-solid fa-wand-magic-sparkles"></i>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-ios-label">打卡自动化配置</div>
+            <div class="text-[10px] text-ios-secondaryLabel font-medium">快捷指令 / 安卓伴侣</div>
+          </div>
+        </button>
+
+        <button onclick="triggerAlertCheck()" class="bg-white p-3.5 rounded-2xl shadow-ios-card border border-black/[0.04] text-left hover:bg-slate-50 active:scale-[0.99] transition space-y-1.5">
+          <div class="w-8 h-8 rounded-xl bg-ios-orange/10 flex items-center justify-center text-ios-orange text-sm">
+            <i class="fa-solid fa-bell"></i>
+          </div>
+          <div>
+            <div class="text-xs font-semibold text-ios-label">夜间超时巡检</div>
+            <div class="text-[10px] text-ios-secondaryLabel font-medium">模拟微信模板消息告警</div>
+          </div>
+        </button>
+      </div>
+
+      <!-- Circles Section (Apple Find My / Inset Grouped Section) -->
+      <section class="space-y-2.5">
+        <div class="flex items-center justify-between px-1">
+          <h3 class="text-xs font-semibold uppercase tracking-wider text-ios-secondaryLabel">
+            守护圈状态
+          </h3>
+          <div class="flex items-center space-x-3 text-xs">
+            <button onclick="openJoinModal()" class="text-ios-blue font-medium hover:underline flex items-center space-x-1">
+              <i class="fa-solid fa-qrcode text-[10px]"></i>
+              <span>输入邀请码</span>
+            </button>
+            <span class="text-ios-secondaryLabel/40">•</span>
+            <button onclick="openCreateModal()" class="text-ios-blue font-medium hover:underline">
+              新建圈
+            </button>
+          </div>
+        </div>
+
+        <!-- iOS Segmented Control Tabs -->
+        <div id="circleTabs" class="bg-ios-separator/50 p-1 rounded-xl flex space-x-1 overflow-x-auto no-scrollbar">
+          <!-- Dynamically populated -->
+        </div>
+
+        <!-- Circle Invite Code Capsule -->
+        <div id="circleCodeBox" class="hidden bg-white/60 backdrop-blur-sm border border-ios-separator/80 rounded-2xl px-3.5 py-2 flex items-center justify-between text-xs">
+          <div class="flex items-center space-x-2 text-ios-secondaryLabel">
+            <i class="fa-solid fa-link text-ios-blue text-[11px]"></i>
+            <span>圈子邀请码:</span>
+            <span id="circleCodeVal" class="font-mono font-bold text-ios-label tracking-wider">------</span>
+          </div>
+          <button onclick="copyCurrentCircleCode()" class="text-[11px] font-semibold text-ios-blue hover:underline">
+            复制邀请
+          </button>
+        </div>
+
+        <!-- Members Inset Grouped List -->
+        <div id="membersContainer" class="bg-white rounded-3xl shadow-ios-card border border-black/[0.04] overflow-hidden divide-y divide-ios-separator/60">
+          <div class="text-center py-10 text-ios-secondaryLabel text-xs">
+            <i class="fa-solid fa-circle-notch fa-spin text-base text-ios-blue mb-2"></i>
+            <p>正在同步圈子亲友状态...</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Apple Style Alert Banner / Toast -->
+      <div id="alertNoticeBox" class="hidden bg-white rounded-2xl p-4 shadow-ios-elevated border-l-4 border-ios-red space-y-2">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-2">
+            <i class="fa-solid fa-triangle-exclamation text-ios-red text-sm"></i>
+            <span class="font-semibold text-xs text-ios-label">微信服务号 · 模拟告警推送</span>
+          </div>
+          <button onclick="document.getElementById('alertNoticeBox').classList.add('hidden')" class="text-ios-secondaryLabel text-base leading-none">&times;</button>
+        </div>
+        <p id="alertNoticeMsg" class="text-xs text-slate-700 leading-relaxed"></p>
+        <div class="text-[10px] text-ios-secondaryLabel flex items-center space-x-1 pt-0.5">
+          <i class="fa-solid fa-clock text-[9px]"></i>
+          <span>已向圈内所有紧急联系人派发提醒</span>
+        </div>
+      </div>
+
+    </main>
+
+    <!-- Apple Style Frosted Glass Tab Bar -->
+    <nav class="sticky bottom-0 z-30 bg-white/80 backdrop-blur-xl border-t border-ios-separator/70 px-8 py-2 flex justify-around safe-bottom">
+      <button class="flex flex-col items-center text-ios-blue text-[10px] font-semibold space-y-0.5">
+        <i class="fa-solid fa-heart-pulse text-lg"></i>
+        <span>平安守护</span>
+      </button>
+      <button onclick="showSetupModal()" class="flex flex-col items-center text-ios-secondaryLabel hover:text-ios-blue text-[10px] font-medium space-y-0.5 transition">
+        <i class="fa-solid fa-sliders text-lg"></i>
+        <span>打卡配置</span>
+      </button>
+      <button onclick="showSettingsModal()" class="flex flex-col items-center text-ios-secondaryLabel hover:text-ios-blue text-[10px] font-medium space-y-0.5 transition">
+        <i class="fa-solid fa-gear text-lg"></i>
+        <span>守护规则</span>
+      </button>
+    </nav>
+
+    <!-- ==================== APPLE STYLE SHEETS / MODALS ==================== -->
+
+    <!-- MODAL 1: Setup Device / Shortcuts Guide Sheet -->
+    <div id="setupModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end justify-center">
+      <div class="bg-white w-full max-w-md rounded-t-[32px] p-6 space-y-4 max-h-[88vh] overflow-y-auto shadow-ios-sheet safe-bottom">
+        <!-- Grabber Handle -->
+        <div class="w-9 h-1 bg-ios-separator rounded-full mx-auto -mt-2 mb-1"></div>
+
+        <div class="flex items-center justify-between pb-2 border-b border-ios-separator/60">
+          <h3 class="font-bold text-ios-label text-base">打卡自动化配置</h3>
+          <button onclick="closeModal('setupModal')" class="w-7 h-7 bg-ios-bg rounded-full flex items-center justify-center text-ios-secondaryLabel text-sm font-bold">&times;</button>
+        </div>
+
+        <!-- iOS Segmented Switcher -->
+        <div class="flex bg-ios-separator/50 p-1 rounded-xl text-xs font-semibold">
+          <button id="btnTabIos" onclick="switchSetupTab('ios')" class="flex-1 py-1.5 rounded-lg bg-white text-ios-label shadow-xs transition">
+            <i class="fa-brands fa-apple mr-1"></i> iPhone (快捷指令)
+          </button>
+          <button id="btnTabAndroid" onclick="switchSetupTab('android')" class="flex-1 py-1.5 rounded-lg text-ios-secondaryLabel hover:text-ios-label transition">
+            <i class="fa-brands fa-android mr-1"></i> Android (极简伴侣)
+          </button>
+        </div>
+
+        <!-- iOS Content -->
+        <div id="contentIos" class="space-y-4 text-xs text-slate-700">
+          <div class="p-3.5 bg-ios-blue/5 border border-ios-blue/15 rounded-2xl flex items-start space-x-2.5">
+            <i class="fa-solid fa-bolt-lightning text-ios-blue text-sm mt-0.5"></i>
+            <div class="text-[12px] leading-relaxed text-slate-700">
+              <strong class="font-semibold text-ios-label">苹果原生支持 · 免解锁打卡：</strong> 利用 iOS 快捷指令的「充电器」自动化。无需点亮屏幕，每天只要插上充电线或放上无线充，后台 0.1 秒自动完成平安报备。
+            </div>
+          </div>
+
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-wider text-ios-secondaryLabel">专属打卡 Webhook 链接：</label>
+            <div class="flex items-center space-x-2 bg-ios-bg p-2.5 rounded-xl border border-ios-separator/60">
+              <input id="myWebhookUrl" type="text" readonly class="bg-transparent flex-1 text-xs font-mono text-slate-800 outline-none select-all" value="" />
+              <button onclick="copyWebhookUrl()" class="bg-ios-blue text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs hover:bg-blue-600 active:scale-95 transition shrink-0">
+                复制
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-2 border-t border-ios-separator/60 pt-3">
+            <h4 class="font-semibold text-ios-label text-xs">只需 4 步设置（一次设置，永久有效）：</h4>
+            <ol class="space-y-2 list-decimal list-inside text-[12px] text-slate-600 leading-relaxed">
+              <li>打开 iPhone 自带的<strong>「快捷指令」</strong>，点击底部<strong>「自动化」</strong>。</li>
+              <li>点击右上角<strong>「+」</strong>新建自动化，找到并点击<strong>「充电器」</strong>。</li>
+              <li>选项勾选<strong>「已连接」</strong>（或同时勾选「已断开连接」）。</li>
+              <li>下方选择<strong>「立即运行」</strong>，并<strong>关闭「运行时通知」</strong>。</li>
+              <li>下一步添加操作：选择<strong>「获取 URL 的内容」</strong> -> 粘贴专属链接。</li>
+              <li>点击完成。从今往后，每天只要插上充电器，平安即刻自动报达！</li>
+            </ol>
+          </div>
+        </div>
+
+        <!-- Android Content -->
+        <div id="contentAndroid" class="hidden space-y-4 text-xs text-slate-700">
+          <div class="p-3.5 bg-ios-green/5 border border-ios-green/15 rounded-2xl flex items-start space-x-2.5">
+            <i class="fa-solid fa-circle-check text-ios-green text-sm mt-0.5"></i>
+            <div class="text-[12px] leading-relaxed text-slate-700">
+              <strong>极轻量后台守护伴侣（< 1.5MB）：</strong> 仅监听底层 <code>ACTION_USER_PRESENT</code> 解锁广播。每天首次解锁后立即休眠，零额外耗电。
+            </div>
+          </div>
+
+          <div class="p-3.5 bg-ios-bg rounded-2xl flex items-center justify-between border border-ios-separator/60">
+            <div>
+              <p class="font-semibold text-ios-label text-xs">活着么·安卓极简伴侣.apk</p>
+              <p class="text-[11px] text-ios-secondaryLabel">内置开机自启监听 · 支持 Android 8.0~15.0</p>
+            </div>
+            <a href="/android-companion-demo.zip" download class="bg-ios-blue text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-600 transition">
+              获取源码
+            </a>
+          </div>
+
+          <div class="space-y-1.5 text-[12px] text-slate-600">
+            <p class="font-semibold text-ios-label">必要系统权限配置：</p>
+            <ul class="list-disc list-inside space-y-1 pl-1">
+              <li>在手机应用设置中开启<strong>「允许自启动」</strong>（重启后自愈）</li>
+              <li>电池策略设置为<strong>「无限制 / 忽略电池优化」</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <button onclick="closeModal('setupModal')" class="w-full py-3 bg-ios-bg text-ios-label rounded-xl font-semibold text-xs hover:bg-slate-200 transition">
+          完成
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL 2: Create Circle Sheet -->
+    <div id="createModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-ios-elevated">
+        <div class="w-9 h-1 bg-ios-separator rounded-full mx-auto -mt-2"></div>
+        <h3 class="font-bold text-ios-label text-base text-center">创建守护圈</h3>
+        <input id="newCircleName" type="text" placeholder="例如：我的小家庭 / 挚友互助群" class="w-full text-sm bg-ios-bg border border-ios-separator/60 rounded-xl p-3 outline-none focus:ring-2 focus:ring-ios-blue/30 font-medium" />
+        <div class="flex space-x-2 pt-1">
+          <button onclick="closeModal('createModal')" class="flex-1 py-2.5 bg-ios-bg text-ios-secondaryLabel rounded-xl text-xs font-semibold">取消</button>
+          <button onclick="submitCreateCircle()" class="flex-1 py-2.5 bg-ios-blue text-white rounded-xl text-xs font-semibold hover:bg-blue-600 shadow-xs">确认创建</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 3: Join Circle Sheet -->
+    <div id="joinModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-ios-elevated">
+        <div class="w-9 h-1 bg-ios-separator rounded-full mx-auto -mt-2"></div>
+        <h3 class="font-bold text-ios-label text-base text-center">输入 6 位邀请码</h3>
+        <input id="joinCircleCode" type="text" maxlength="6" placeholder="例如: 666888" class="w-full text-center tracking-widest text-xl font-bold bg-ios-bg border border-ios-separator/60 rounded-xl p-3 outline-none focus:ring-2 focus:ring-ios-blue/30 font-mono" />
+        <div class="flex space-x-2 pt-1">
+          <button onclick="closeModal('joinModal')" class="flex-1 py-2.5 bg-ios-bg text-ios-secondaryLabel rounded-xl text-xs font-semibold">取消</button>
+          <button onclick="submitJoinCircle()" class="flex-1 py-2.5 bg-ios-blue text-white rounded-xl text-xs font-semibold hover:bg-blue-600 shadow-xs">加入圈子</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- MODAL 4: User Profile & Alert Settings Sheet -->
+    <div id="settingsModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-end justify-center">
+      <div class="bg-white w-full max-w-md rounded-t-[32px] p-6 space-y-4 max-h-[85vh] overflow-y-auto shadow-ios-sheet safe-bottom">
+        <div class="w-9 h-1 bg-ios-separator rounded-full mx-auto -mt-2 mb-1"></div>
+
+        <div class="flex items-center justify-between pb-2 border-b border-ios-separator/60">
+          <h3 class="font-bold text-ios-label text-base">个人守护规则设置</h3>
+          <button onclick="closeModal('settingsModal')" class="w-7 h-7 bg-ios-bg rounded-full flex items-center justify-center text-ios-secondaryLabel text-sm font-bold">&times;</button>
+        </div>
+
+        <div class="space-y-3.5 text-xs">
+          <div>
+            <label class="font-semibold text-ios-label">我的昵称</label>
+            <input id="settingNickname" type="text" class="w-full mt-1.5 bg-ios-bg border border-ios-separator/60 rounded-xl p-2.5 outline-none font-medium text-sm focus:ring-2 focus:ring-ios-blue/30" />
+          </div>
+          <div>
+            <label class="font-semibold text-ios-label">每日最晚打卡预警时间</label>
+            <input id="settingAlertTime" type="time" class="w-full mt-1.5 bg-ios-bg border border-ios-separator/60 rounded-xl p-2.5 outline-none font-mono font-bold text-sm focus:ring-2 focus:ring-ios-blue/30" />
+            <p class="text-[11px] text-ios-secondaryLabel mt-1">到达该时间仍未解锁手机，系统自动触发微信模板消息告警</p>
+          </div>
+          <div>
+            <label class="font-semibold text-ios-label">紧急联系人称呼</label>
+            <input id="settingEmergencyName" type="text" placeholder="例如: 母亲 / 房东 / 挚友" class="w-full mt-1.5 bg-ios-bg border border-ios-separator/60 rounded-xl p-2.5 outline-none font-medium text-sm focus:ring-2 focus:ring-ios-blue/30" />
+          </div>
+          <div>
+            <label class="font-semibold text-ios-label">紧急联系人电话</label>
+            <input id="settingEmergencyPhone" type="tel" placeholder="11位手机号码" class="w-full mt-1.5 bg-ios-bg border border-ios-separator/60 rounded-xl p-2.5 outline-none font-mono text-sm focus:ring-2 focus:ring-ios-blue/30" />
+          </div>
+        </div>
+
+        <button onclick="saveUserSettings()" class="w-full py-3 bg-ios-blue text-white rounded-xl font-semibold text-xs hover:bg-blue-600 transition shadow-xs">
+          保存规则
+        </button>
+      </div>
+    </div>
+
+    <!-- MODAL 5: Mobile QR Code Scanner Sheet -->
+    <div id="qrModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+      <div class="bg-white w-full max-w-xs rounded-3xl p-6 space-y-4 shadow-ios-elevated text-center">
+        <div class="flex items-center justify-between pb-1">
+          <span class="text-xs font-semibold text-ios-secondaryLabel uppercase">手机扫码实时体验</span>
+          <button onclick="closeModal('qrModal')" class="w-6 h-6 bg-ios-bg rounded-full text-xs font-bold text-ios-secondaryLabel">&times;</button>
+        </div>
+
+        <div class="bg-white p-3 rounded-2xl border border-ios-separator/80 shadow-xs inline-block">
+          <img id="qrCodeImg" src="" alt="手机扫码二维码" class="w-48 h-48 mx-auto rounded-lg" />
+        </div>
+
+        <div class="space-y-1">
+          <p class="text-xs font-semibold text-ios-label">手机连接相同 Wi-Fi 即可直接访问</p>
+          <p id="qrUrlText" class="text-[11px] font-mono text-ios-secondaryLabel select-all break-all"></p>
+        </div>
+
+        <button onclick="closeModal('qrModal')" class="w-full py-2.5 bg-ios-bg text-ios-label rounded-xl font-semibold text-xs hover:bg-slate-200 transition">
+          我知道了
+        </button>
+      </div>
+    </div>
+
+  </div>
+
+  <script src="/app.js"></script>
+</body>
+</html>
