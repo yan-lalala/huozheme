@@ -19,6 +19,20 @@ document.addEventListener('DOMContentLoaded', async () => {
       openJoinModal();
     }, 500);
   }
+
+  // Smart auto-polling: refresh status every 6 seconds so charging checkin reflects on screen in real time
+  setInterval(() => {
+    if (document.visibilityState === 'visible') {
+      loadUserData();
+    }
+  }, 6000);
+
+  // Instant refresh when user switches back to browser tab
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') {
+      loadUserData();
+    }
+  });
 });
 
 async function initUserSession() {
