@@ -26,17 +26,15 @@ jobs:
           java-version: '17'
           distribution: 'temurin'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      - name: Setup Gradle
+      - name: Setup Gradle 8.5
         uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.5'
 
-      - name: Generate Gradle Wrapper & Build APK
+      - name: Build APK with Gradle
         working-directory: ./android
         run: |
-          gradle wrapper
-          ./gradlew assembleDebug --stacktrace
+          gradle assembleDebug --stacktrace
 
       - name: Copy APK to Public Directory
         run: |
@@ -53,6 +51,7 @@ jobs:
         run: |
           git config --global user.name "github-actions[bot]"
           git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          git pull origin master --rebase || true
           git add public/huozheme-companion.apk
           git commit -m "chore(release): update compiled huozheme-companion.apk [skip ci]" || echo "No changes to commit"
           git push origin master
