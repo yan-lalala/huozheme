@@ -103,16 +103,12 @@
           <i class="fa-solid fa-qrcode"></i>
         </button>
 
-        <!-- iOS Style Segmented User Switcher -->
-        <div class="flex items-center space-x-1.5 bg-ios-fillQuaternary px-2.5 py-1 rounded-full border border-black/5">
-          <i class="fa-solid fa-person-circle-check text-xs text-ios-blue"></i>
-          <select id="userSelector" onchange="switchCurrentUser(this.value)" class="text-xs bg-transparent text-ios-label font-semibold outline-none cursor-pointer pr-1">
-            <option value="hzm_demo_me">我 (守护者)</option>
-            <option value="hzm_demo_mom">老妈</option>
-            <option value="hzm_demo_dad">老爸</option>
-            <option value="hzm_demo_friend">阿明 (搭子)</option>
-          </select>
-        </div>
+        <!-- Profile & Settings Button -->
+        <button onclick="showSettingsModal()" class="flex items-center space-x-1.5 bg-ios-fillQuaternary px-2.5 py-1 rounded-full border border-black/5 hover:bg-slate-200 transition">
+          <span id="headerAvatar" class="text-xs">🧑</span>
+          <span id="headerNickname" class="text-xs text-ios-label font-semibold max-w-[64px] truncate">我</span>
+          <i class="fa-solid fa-gear text-[10px] text-ios-secondaryLabel ml-0.5"></i>
+        </button>
       </div>
     </header>
 
@@ -134,7 +130,7 @@
 
             <div class="space-y-1">
               <div class="flex items-center space-x-1.5">
-                <h2 id="userName" class="text-base font-semibold text-ios-label">我 (守护者)</h2>
+                <h2 id="userName" class="text-base font-semibold text-ios-label">我</h2>
                 <span id="deviceBadge" class="text-[10px] font-medium bg-ios-bg text-ios-secondaryLabel px-2 py-0.5 rounded-full">
                   iPhone · 充电自动化
                 </span>
@@ -158,7 +154,7 @@
 
           <button onclick="triggerSimulatedUnlock()" class="bg-ios-bg hover:bg-slate-200/70 text-ios-blue active:scale-95 px-3.5 py-1.5 rounded-full text-xs font-semibold tracking-tight transition flex items-center space-x-1">
             <i class="fa-solid fa-bolt text-[11px]"></i>
-            <span>模拟插上充电器</span>
+            <span>手动快速打卡</span>
           </button>
         </div>
       </div>

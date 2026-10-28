@@ -1,4 +1,8 @@
-let currentToken = 'hzm_demo_me';
+// Read token from URL query or localStorage
+const urlParams = new URLSearchParams(window.location.search);
+let currentToken = urlParams.get('token') || localStorage.getItem('hzm_user_token') || 'hzm_demo_me';
+localStorage.setItem('hzm_user_token', currentToken);
+
 let currentUser = null;
 let currentCircleId = null;
 let allCircles = [];
@@ -6,13 +10,16 @@ let allCircles = [];
 // Initialize app on DOM ready
 document.addEventListener('DOMContentLoaded', () => {
   loadUserData();
-});
 
-// Switch user perspective from selector
-function switchCurrentUser(token) {
-  currentToken = token;
-  loadUserData();
-}
+  // Check if invited via URL
+  const inviteCode = urlParams.get('invite');
+  if (inviteCode) {
+    setTimeout(() => {
+      document.getElementById('joinCircleCode').value = inviteCode;
+      openJoinModal();
+    }, 500);
+  }
+});
 
 // Fetch user data & circles
 async function loadUserData() {
@@ -20,26 +27,56 @@ async function loadUserData() {
     const res = await fetch(`/api/user/me?token=${currentToken}`);
     const data = await res.json();
     if (!data.success) {
-      alert('加载用户数据失败');
-      return;
+      console.warn('用户不存在，重置为默认用户');
+      currentToken = 'hzm_demo_me';
+      localStorage.setItem('hzm_user_token', currentToken);
+      const retryRes = await fetch(`/api/user/me?token=${currentToken}`);
+      const retryData = await retryRes.json();
+      if (!retryData.success) return;
+      currentUser = retryData.user;
+      allCircles = retryData.circles || [];
+    } else {
+      currentUser = data.user;
+      allCircles = data.circles || [];
     }
 
-    currentUser = data.user;
-    allCircles = data.circles || [];
+    // Update Header Profile
+    const headerAvatar = document.getElementById('headerAvatar');
+    const headerNickname = document.getElementById('headerNickname');
+    if (headerAvatar) headerAvatar.textContent = currentUser.avatar || '🧑';
+    if (headerNickname) headerNickname.textContent = currentUser.nickname || '我';
 
     renderMyStatusCard(currentUser);
     renderCircleTabs(allCircles);
 
-    // Default to first circle if none selected
+    // Default to first circle if any exist
     if (allCircles.length > 0) {
       if (!currentCircleId || !allCircles.some(c => c.id === currentCircleId)) {
         currentCircleId = allCircles[0].id;
       }
       loadCircleDetails(currentCircleId);
     } else {
+      currentCircleId = null;
+      document.getElementById('circleCodeBox').classList.add('hidden');
       document.getElementById('membersContainer').innerHTML = `
-        <div class="text-center py-10 text-ios-secondaryLabel text-xs">
-          暂无加入的守护圈，快点击上方创建或输入邀请码吧
+        <div class="p-6 text-center space-y-3">
+          <div class="w-12 h-12 rounded-2xl bg-ios-blue/10 text-ios-blue flex items-center justify-center text-xl mx-auto">
+            <i class="fa-solid fa-people-roof"></i>
+          </div>
+          <div class="space-y-1">
+            <h4 class="font-semibold text-sm text-ios-label">尚未加入任何守护圈</h4>
+            <p class="text-xs text-ios-secondaryLabel leading-relaxed max-w-xs mx-auto">
+              创建你的家庭或密友守护圈，把邀请码发给亲友，每天手机只要充上电即可自动互报平安。
+            </p>
+          </div>
+          <div class="flex justify-center space-x-2 pt-1">
+            <button onclick="openCreateModal()" class="bg-ios-blue text-white px-4 py-2 rounded-xl text-xs font-semibold hover:bg-blue-600 transition shadow-xs">
+              + 创建我的圈子
+            </button>
+            <button onclick="openJoinModal()" class="bg-ios-bg text-ios-label px-4 py-2 rounded-xl text-xs font-semibold hover:bg-slate-200 transition">
+              输入邀请码
+            </button>
+          </div>
         </div>
       `;
     }
@@ -145,8 +182,9 @@ function copyCurrentCircleCode() {
   const codeBox = document.getElementById('circleCodeBox');
   const code = codeBox.getAttribute('data-code');
   if (code) {
-    navigator.clipboard.writeText(code);
-    alert(`圈子邀请码 [${code}] 已复制！可直接发给亲友。`);
+    const inviteText = `我在「活着么」创建了亲友守护圈，邀请码是【${code}】。每天只要手机充上电即可自动互报平安！点击直接加入：${window.location.origin}?invite=${code}`;
+    navigator.clipboard.writeText(inviteText);
+    alert(`邀请信息已复制到剪贴板！\n可直接粘贴发给微信亲友：\n\n"${inviteText}"`);
   }
 }
 

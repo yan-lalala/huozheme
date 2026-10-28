@@ -17,66 +17,40 @@ function generateCircleCode() {
   return Math.random().toString().slice(2, 8);
 }
 
-// Seed initial demo data if empty
+// Initialize real production database & purge demo data
 function seedDemoDataIfEmpty() {
-  const userCountStmt = db.prepare('SELECT COUNT(*) as count FROM users');
-  const result = userCountStmt.get();
-  if (result.count === 0) {
-    console.log('[Init] Seeding initial demo data...');
-    const nowStr = new Date().toISOString();
-    const today = getTodayString();
+  try {
+    // 1. Purge fake demo users and fake test data
+    const fakeTokens = ['hzm_demo_mom', 'hzm_demo_dad', 'hzm_demo_friend'];
+    for (const t of fakeTokens) {
+      const u = db.prepare('SELECT id FROM users WHERE device_token = ?').get(t);
+      if (u) {
+        db.prepare('DELETE FROM circle_members WHERE user_id = ?').run(u.id);
+        db.prepare('DELETE FROM daily_checkins WHERE user_id = ?').run(u.id);
+        db.prepare('DELETE FROM users WHERE id = ?').run(u.id);
+      }
+    }
 
-    // 1. Create Demo Users
-    const insertUser = db.prepare(`
-      INSERT INTO users (device_token, nickname, avatar, device_type, alert_time, emergency_contact_name, emergency_contact_phone, created_at)
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    `);
+    // Delete fake demo circles
+    const fakeCircles = db.prepare("SELECT id FROM circles WHERE code IN ('666888', '520131')").all();
+    for (const c of fakeCircles) {
+      db.prepare('DELETE FROM circle_members WHERE circle_id = ?').run(c.id);
+      db.prepare('DELETE FROM circles WHERE id = ?').run(c.id);
+    }
+  } catch (err) {
+    console.error('Error cleaning demo data:', err);
+  }
 
-    insertUser.run('hzm_demo_me', '我 (守护者)', '🧑', 'ios', '21:00', '老妈', '13800138000', nowStr);
-    insertUser.run('hzm_demo_mom', '老妈', '👵', 'android', '20:00', '我', '13900139000', nowStr);
-    insertUser.run('hzm_demo_dad', '老爸', '👴', 'android', '20:00', '我', '13900139000', nowStr);
-    insertUser.run('hzm_demo_friend', '阿明 (独居搭子)', '👦', 'ios', '22:00', '我', '13700137000', nowStr);
-
-    // 2. Create Demo Circles
-    const insertCircle = db.prepare(`
-      INSERT INTO circles (name, code, owner_id, created_at)
-      VALUES (?, ?, ?, ?)
-    `);
-
-    insertCircle.run('温馨小家庭 🏡', '666888', 1, nowStr);
-    insertCircle.run('独居青年平安互助群 🛡️', '520131', 1, nowStr);
-
-    // 3. Add Members
-    const insertMember = db.prepare(`
-      INSERT INTO circle_members (circle_id, user_id, joined_at)
-      VALUES (?, ?, ?)
-    `);
-    // Family circle: Me, Mom, Dad
-    insertMember.run(1, 1, nowStr);
-    insertMember.run(1, 2, nowStr);
-    insertMember.run(1, 3, nowStr);
-
-    // Friend circle: Me, Friend
-    insertMember.run(2, 1, nowStr);
-    insertMember.run(2, 4, nowStr);
-
-    // 4. Seed today's checkin for Mom & Dad to show realistic states
-    const insertCheckin = db.prepare(`
-      INSERT INTO daily_checkins (user_id, checkin_date, checkin_time, ip, user_agent)
-      VALUES (?, ?, ?, ?, ?)
-    `);
-    
-    // Mom woke up early and checked in at 06:45
-    const momCheckinTime = new Date();
-    momCheckinTime.setHours(6, 45, 12);
-    insertCheckin.run(2, today, momCheckinTime.toISOString(), '127.0.0.1', 'Android/UnlockReceiver');
-
-    // Dad woke up and checked in at 07:18
-    const dadCheckinTime = new Date();
-    dadCheckinTime.setHours(7, 18, 30);
-    insertCheckin.run(3, today, dadCheckinTime.toISOString(), '127.0.0.1', 'Android/UnlockReceiver');
-
-    console.log('[Init] Demo data seeded successfully.');
+  // 2. Ensure the primary user account exists (matching user's iPhone shortcut token)
+  const nowStr = new Date().toISOString();
+  const me = db.prepare("SELECT * FROM users WHERE device_token = 'hzm_demo_me'").get();
+  if (!me) {
+    db.prepare(`
+      INSERT INTO users (device_token, nickname, avatar, device_type, alert_time, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
+    `).run('hzm_demo_me', '我', '🧑', 'ios', '21:00', nowStr);
+  } else if (me.nickname && (me.nickname.includes('守护者') || me.nickname.includes('('))) {
+    db.prepare("UPDATE users SET nickname = '我' WHERE device_token = 'hzm_demo_me'").run();
   }
 }
 
