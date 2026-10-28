@@ -320,26 +320,37 @@
           <div class="p-3.5 bg-ios-green/5 border border-ios-green/15 rounded-2xl flex items-start space-x-2.5">
             <i class="fa-solid fa-circle-check text-ios-green text-sm mt-0.5"></i>
             <div class="text-[12px] leading-relaxed text-slate-700">
-              <strong>极轻量后台守护伴侣（< 1.5MB）：</strong> 仅监听底层 <code>ACTION_USER_PRESENT</code> 解锁广播。每天首次解锁后立即休眠，零额外耗电。
+              <strong>轻量原生守护伴侣（官方编译）：</strong> 支持屏幕解锁与插电双监听。安装后填入专属 Token，每天首次解锁或插电自动向云端报平安，完成后立即休眠，零额外耗电。
             </div>
           </div>
 
           <div class="p-3.5 bg-ios-bg rounded-2xl flex items-center justify-between border border-ios-separator/60">
             <div>
               <p class="font-semibold text-ios-label text-xs">活着么·安卓守护伴侣.apk</p>
-              <p class="text-[11px] text-ios-secondaryLabel">解锁与充电双监听 · 支持 Android 8.0~15.0</p>
+              <p class="text-[11px] text-ios-secondaryLabel">官方原生包 (~5.3MB) · 支持 Android 8.0~15.0</p>
             </div>
-            <a href="/huozheme-companion.apk" download class="bg-ios-blue text-white px-3.5 py-1.5 rounded-lg text-xs font-semibold hover:bg-blue-600 transition shadow-xs">
-              下载 APK 安装包
+            <a href="/huozheme-companion.apk" download class="bg-ios-blue text-white px-3.5 py-2 rounded-xl text-xs font-semibold hover:bg-blue-600 active:scale-95 transition shadow-xs flex items-center gap-1.5">
+              <i class="fa-solid fa-download"></i>
+              <span>下载安装包</span>
             </a>
           </div>
 
-          <div class="space-y-1.5 text-[12px] text-slate-600">
-            <p class="font-semibold text-ios-label">必要系统权限配置：</p>
-            <ul class="list-disc list-inside space-y-1 pl-1">
-              <li>在手机应用设置中开启<strong>「允许自启动」</strong>（重启后自愈）</li>
-              <li>电池策略设置为<strong>「无限制 / 忽略电池优化」</strong></li>
-            </ul>
+          <div class="space-y-1.5">
+            <label class="text-[11px] font-semibold uppercase tracking-wider text-ios-secondaryLabel">我的专属设备 Token（安装后填入）：</label>
+            <div class="flex items-center space-x-2 bg-ios-bg p-2.5 rounded-xl border border-ios-separator/60">
+              <input id="myAndroidToken" type="text" readonly class="bg-transparent flex-1 text-xs font-mono text-slate-800 outline-none select-all" value="" />
+              <button onclick="copyAndroidToken()" class="bg-ios-blue text-white px-3 py-1.5 rounded-lg text-xs font-semibold shadow-xs hover:bg-blue-600 active:scale-95 transition shrink-0">
+                复制 Token
+              </button>
+            </div>
+          </div>
+
+          <div class="space-y-1.5 text-[12px] text-slate-600 border-t border-ios-separator/60 pt-3">
+            <p class="font-semibold text-ios-label text-xs">安装后只需 2 步：</p>
+            <ol class="space-y-1.5 list-decimal list-inside text-[12px] text-slate-600 leading-relaxed">
+              <li>打开伴侣 App，粘贴上方专属 Token 并点击「保存并启用」。</li>
+              <li>点击「设置自启与白名单」，在系统设置中允许自启动与忽略电池优化即可。</li>
+            </ol>
           </div>
         </div>
 

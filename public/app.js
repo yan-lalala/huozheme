@@ -87,9 +87,13 @@ async function loadUserData() {
     document.getElementById('settingEmergencyName').value = currentUser.emergency_contact_name || '';
     document.getElementById('settingEmergencyPhone').value = currentUser.emergency_contact_phone || '';
 
-    // Update webhook url in setup modal
+    // Update webhook url & Android token in setup modal
     const origin = window.location.origin;
     document.getElementById('myWebhookUrl').value = `${origin}/api/v1/ping?token=${currentUser.device_token}`;
+    const androidTokenInput = document.getElementById('myAndroidToken');
+    if (androidTokenInput) {
+      androidTokenInput.value = currentUser.device_token;
+    }
 
   } catch (err) {
     console.error('loadUserData error:', err);
@@ -370,6 +374,13 @@ function copyWebhookUrl() {
   input.select();
   navigator.clipboard.writeText(input.value);
   alert('已复制专属打卡 Webhook 链接！\n前往 iPhone「快捷指令」App 粘贴即可。');
+}
+
+function copyAndroidToken() {
+  const input = document.getElementById('myAndroidToken');
+  input.select();
+  navigator.clipboard.writeText(input.value);
+  alert('已复制专属设备 Token！\n在安卓守护伴侣 App 中粘贴保存即可。');
 }
 
 async function submitCreateCircle() {
