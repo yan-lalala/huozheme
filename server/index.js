@@ -84,7 +84,7 @@ app.get('/api/user/me', (req, res) => {
     user: {
       ...user,
       todayCheckedIn: !!todayCheckin,
-      checkinTime: todayCheckin ? new Date(todayCheckin.checkin_time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : null
+      checkinTime: todayCheckin ? services.formatBeijingTime(todayCheckin.checkin_time) : null
     },
     circles
   });
@@ -97,6 +97,13 @@ app.post('/api/user/register', (req, res) => {
     return res.status(400).json({ success: false, message: '昵称不能为空' });
   }
   const user = services.createUser(nickname, deviceType || 'ios', alertTime || '21:00');
+  res.json({ success: true, user });
+});
+
+// Quick guest user creation for new visitors
+app.post('/api/user/create-guest', (req, res) => {
+  const { deviceType, nickname } = req.body;
+  const user = services.createUser(nickname || '新成员', deviceType || 'ios');
   res.json({ success: true, user });
 });
 
@@ -137,6 +144,16 @@ app.post('/api/circles/join', (req, res) => {
     return res.status(400).json({ success: false, message: '缺少参数' });
   }
   const result = services.joinCircleByCode(userId, code);
+  res.json(result);
+});
+
+// Quick join with automatic new member profile creation
+app.post('/api/circles/quick-join', (req, res) => {
+  const { code, nickname, deviceType } = req.body;
+  if (!code) {
+    return res.status(400).json({ success: false, message: '缺少邀请码' });
+  }
+  const result = services.quickJoinCircle(code, nickname, deviceType);
   res.json(result);
 });
 

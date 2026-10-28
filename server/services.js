@@ -1,12 +1,28 @@
 const crypto = require('node:crypto');
 const db = require('./db');
 
+// Beijing time helpers (UTC+8)
 function getTodayString() {
-  const now = new Date();
-  const year = now.getFullYear();
-  const month = String(now.getMonth() + 1).padStart(2, '0');
-  const day = String(now.getDate()).padStart(2, '0');
-  return `${year}-${month}-${day}`;
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Shanghai' });
+}
+
+function formatBeijingTime(dateOrIso, options = { hour: '2-digit', minute: '2-digit' }) {
+  if (!dateOrIso) return null;
+  const d = typeof dateOrIso === 'string' ? new Date(dateOrIso) : dateOrIso;
+  return d.toLocaleTimeString('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    hour12: false,
+    ...options
+  });
+}
+
+function getBeijingCurrentHM() {
+  return new Date().toLocaleTimeString('zh-CN', {
+    timeZone: 'Asia/Shanghai',
+    hour12: false,
+    hour: '2-digit',
+    minute: '2-digit'
+  });
 }
 
 function generateToken() {
@@ -128,7 +144,7 @@ function performCheckin(token, ip = '', userAgent = '') {
       alreadyCheckedIn: true,
       user,
       checkin: existing,
-      message: `今日已报平安！打卡时间: ${new Date(existing.checkin_time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
+      message: `今日已报平安！打卡时间: ${formatBeijingTime(existing.checkin_time, { hour: '2-digit', minute: '2-digit', second: '2-digit' })}`
     };
   }
 
@@ -190,6 +206,16 @@ function joinCircleByCode(userId, code) {
     return { success: false, message: '未找到该圈子邀请码' };
   }
 
+  // If the user trying to join is the owner of the circle
+  if (circle.owner_id === userId) {
+    return { 
+      success: false, 
+      isOwner: true, 
+      circle,
+      message: '您当前使用的是圈主身份（我）。如果是亲友加入，请为亲友输入专属称呼！' 
+    };
+  }
+
   const existingMember = db.prepare(`
     SELECT * FROM circle_members WHERE circle_id = ? AND user_id = ?
   `).get(circle.id, userId);
@@ -204,6 +230,28 @@ function joinCircleByCode(userId, code) {
   `).run(circle.id, userId, new Date().toISOString());
 
   return { success: true, message: `已成功加入「${circle.name}」`, circle };
+}
+
+function quickJoinCircle(code, nickname, deviceType = 'ios') {
+  const circle = db.prepare('SELECT * FROM circles WHERE code = ?').get(code);
+  if (!circle) {
+    return { success: false, message: '未找到该圈子邀请码' };
+  }
+
+  const cleanNickname = (nickname || '亲友').trim();
+  const newUser = createUser(cleanNickname, deviceType);
+
+  db.prepare(`
+    INSERT INTO circle_members (circle_id, user_id, joined_at)
+    VALUES (?, ?, ?)
+  `).run(circle.id, newUser.id, new Date().toISOString());
+
+  return {
+    success: true,
+    user: newUser,
+    circle,
+    message: `成功以「${newUser.nickname}」身份加入圈子「${circle.name}」！`
+  };
 }
 
 function getCircleDetailsWithMembers(circleId) {
@@ -225,15 +273,15 @@ function getCircleDetailsWithMembers(circleId) {
     ORDER BY dc.checkin_time DESC, u.id ASC
   `);
 
+  const currentHM = getBeijingCurrentHM();
+
   const members = membersStmt.all(today, circleId).map(m => {
     const isCheckedIn = !!m.checkin_time;
     // Calculate alert status
     let status = 'alive'; // 正常打卡
     if (!isCheckedIn) {
       // Check current hour vs alert_time
-      const now = new Date();
-      const currentHoursMinutes = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-      if (currentHoursMinutes >= (m.alert_time || '21:00')) {
+      if (currentHM >= (m.alert_time || '21:00')) {
         status = 'timeout_alert'; // 超时未打卡警报
       } else {
         status = 'pending'; // 当天尚未打卡，等待中
@@ -249,7 +297,8 @@ function getCircleDetailsWithMembers(circleId) {
       emergency_contact_name: m.emergency_contact_name,
       emergency_contact_phone: m.emergency_contact_phone,
       isCheckedIn,
-      checkinTime: m.checkin_time ? new Date(m.checkin_time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' }) : null,
+      checkinTime: formatBeijingTime(m.checkin_time),
+      checkin_time: m.checkin_time,
       status
     };
   });
@@ -263,8 +312,8 @@ function getCircleDetailsWithMembers(circleId) {
 // Check all pending users and generate system alert logs
 function checkAndGenerateAlerts() {
   const today = getTodayString();
-  const now = new Date();
-  const currentHM = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+  const currentHM = getBeijingCurrentHM();
+  const nowIso = new Date().toISOString();
 
   const unCheckedUsers = db.prepare(`
     SELECT u.* FROM users u
@@ -286,7 +335,7 @@ function checkAndGenerateAlerts() {
         db.prepare(`
           INSERT INTO alerts_log (user_id, alert_date, alert_type, message, created_at)
           VALUES (?, ?, 'timeout_warning', ?, ?)
-        `).run(user.id, today, msg, now.toISOString());
+        `).run(user.id, today, msg, nowIso);
 
         alerts.push({
           userId: user.id,
@@ -303,6 +352,8 @@ function checkAndGenerateAlerts() {
 
 module.exports = {
   getTodayString,
+  formatBeijingTime,
+  getBeijingCurrentHM,
   seedDemoDataIfEmpty,
   getUserByToken,
   getUserById,
@@ -312,6 +363,7 @@ module.exports = {
   getUserCircles,
   createCircle,
   joinCircleByCode,
+  quickJoinCircle,
   getCircleDetailsWithMembers,
   checkAndGenerateAlerts
 };

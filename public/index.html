@@ -375,13 +375,25 @@
 
     <!-- MODAL 3: Join Circle Sheet -->
     <div id="joinModal" class="hidden fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
-      <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-4 shadow-ios-elevated">
-        <div class="w-9 h-1 bg-ios-separator rounded-full mx-auto -mt-2"></div>
-        <h3 class="font-bold text-ios-label text-base text-center">输入 6 位邀请码</h3>
-        <input id="joinCircleCode" type="text" maxlength="6" placeholder="例如: 666888" class="w-full text-center tracking-widest text-xl font-bold bg-ios-bg border border-ios-separator/60 rounded-xl p-3 outline-none focus:ring-2 focus:ring-ios-blue/30 font-mono" />
-        <div class="flex space-x-2 pt-1">
+      <div class="bg-white w-full max-w-sm rounded-3xl p-6 space-y-3.5 shadow-ios-elevated text-left">
+        <div class="flex items-center justify-between pb-1">
+          <h3 class="font-bold text-ios-label text-base">加入亲友守护圈</h3>
+          <button onclick="closeModal('joinModal')" class="w-6 h-6 bg-ios-bg rounded-full text-xs font-bold text-ios-secondaryLabel flex items-center justify-center">&times;</button>
+        </div>
+
+        <div>
+          <label class="text-[11px] font-semibold text-ios-secondaryLabel">6 位圈子邀请码</label>
+          <input id="joinCircleCode" type="text" maxlength="6" placeholder="例如: 751101" class="w-full mt-1 text-center tracking-widest text-lg font-bold bg-ios-bg border border-ios-separator/60 rounded-xl p-2.5 outline-none focus:ring-2 focus:ring-ios-blue/30 font-mono" />
+        </div>
+
+        <div>
+          <label class="text-[11px] font-semibold text-ios-secondaryLabel">我的称呼（圈内显示）</label>
+          <input id="joinNickname" type="text" placeholder="例如: 妈妈 / 爸爸 / 小李" class="w-full mt-1 bg-ios-bg border border-ios-separator/60 rounded-xl p-2.5 outline-none text-xs focus:ring-2 focus:ring-ios-blue/30" />
+        </div>
+
+        <div class="pt-2 flex space-x-2">
           <button onclick="closeModal('joinModal')" class="flex-1 py-2.5 bg-ios-bg text-ios-secondaryLabel rounded-xl text-xs font-semibold">取消</button>
-          <button onclick="submitJoinCircle()" class="flex-1 py-2.5 bg-ios-blue text-white rounded-xl text-xs font-semibold hover:bg-blue-600 shadow-xs">加入圈子</button>
+          <button onclick="submitJoinCircle()" class="flex-1 py-2.5 bg-ios-blue text-white rounded-xl text-xs font-semibold hover:bg-blue-600 active:scale-95 transition shadow-xs">确认加入</button>
         </div>
       </div>
     </div>
@@ -419,6 +431,12 @@
         <button onclick="saveUserSettings()" class="w-full py-3 bg-ios-blue text-white rounded-xl font-semibold text-xs hover:bg-blue-600 transition shadow-xs">
           保存规则
         </button>
+
+        <div class="border-t border-ios-separator/60 pt-2">
+          <button onclick="switchOrResetAccount()" class="w-full py-2.5 text-ios-red rounded-xl font-semibold text-xs hover:bg-ios-red/5 transition">
+            切换身份 / 退出此账号
+          </button>
+        </div>
       </div>
     </div>
 

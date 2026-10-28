@@ -1,15 +1,15 @@
 // Read token from URL query or localStorage
 const urlParams = new URLSearchParams(window.location.search);
-let currentToken = urlParams.get('token') || localStorage.getItem('hzm_user_token') || 'hzm_demo_me';
-localStorage.setItem('hzm_user_token', currentToken);
+let currentToken = urlParams.get('token') || localStorage.getItem('hzm_user_token');
 
 let currentUser = null;
 let currentCircleId = null;
 let allCircles = [];
 
 // Initialize app on DOM ready
-document.addEventListener('DOMContentLoaded', () => {
-  loadUserData();
+document.addEventListener('DOMContentLoaded', async () => {
+  await initUserSession();
+  await loadUserData();
 
   // Check if invited via URL
   const inviteCode = urlParams.get('invite');
@@ -20,6 +20,41 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 500);
   }
 });
+
+async function initUserSession() {
+  const urlToken = urlParams.get('token');
+  if (urlToken) {
+    currentToken = urlToken;
+    localStorage.setItem('hzm_user_token', currentToken);
+    return;
+  }
+
+  if (currentToken) {
+    return;
+  }
+
+  // If visitor has no token at all, create a fresh guest user
+  const isAndroid = /Android/i.test(navigator.userAgent);
+  const deviceType = isAndroid ? 'android' : 'ios';
+
+  try {
+    const res = await fetch('/api/user/create-guest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ deviceType, nickname: '新亲友' })
+    });
+    const data = await res.json();
+    if (data.success && data.user) {
+      currentToken = data.user.device_token;
+      localStorage.setItem('hzm_user_token', currentToken);
+    } else {
+      currentToken = 'hzm_demo_me';
+    }
+  } catch (err) {
+    console.error('initUserSession error:', err);
+    currentToken = 'hzm_demo_me';
+  }
+}
 
 // Fetch user data & circles
 async function loadUserData() {
@@ -408,24 +443,90 @@ async function submitCreateCircle() {
 
 async function submitJoinCircle() {
   const code = document.getElementById('joinCircleCode').value.trim();
+  const nickname = (document.getElementById('joinNickname') ? document.getElementById('joinNickname').value.trim() : '');
   if (!code) return alert('请输入 6 位邀请码');
 
   try {
+    const isAndroid = /Android/i.test(navigator.userAgent);
+    const deviceType = isAndroid ? 'android' : 'ios';
+
+    // If current user is 'hzm_demo_me' OR user entered a custom nickname, we use quick-join to create their real independent identity!
+    if (currentUser && (currentUser.device_token === 'hzm_demo_me' || nickname)) {
+      const res = await fetch('/api/circles/quick-join', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code,
+          nickname: nickname || '亲友',
+          deviceType
+        })
+      });
+      const data = await res.json();
+      if (data.success) {
+        currentToken = data.user.device_token;
+        localStorage.setItem('hzm_user_token', currentToken);
+        closeModal('joinModal');
+        document.getElementById('joinCircleCode').value = '';
+        if (document.getElementById('joinNickname')) document.getElementById('joinNickname').value = '';
+        currentCircleId = data.circle.id;
+        await loadUserData();
+        alert(`🎉 成功加入！\n您已作为「${data.user.nickname}」加入圈子「${data.circle.name}」！\n现在圈内可以互相看到打卡状态了。`);
+        return;
+      } else {
+        alert(data.message || '加入失败');
+        return;
+      }
+    }
+
+    // Otherwise standard join with current user
     const res = await fetch('/api/circles/join', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId: currentUser.id, code })
     });
     const data = await res.json();
-    alert(data.message);
+    if (data.isOwner) {
+      // Owner tried to join their own circle on friend's device
+      const friendName = prompt('您当前处于圈主身份（我）。如果是亲友手机，请输入亲友昵称加入：', '亲友');
+      if (friendName) {
+        const quickRes = await fetch('/api/circles/quick-join', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ code, nickname: friendName, deviceType })
+        });
+        const quickData = await quickRes.json();
+        if (quickData.success) {
+          currentToken = quickData.user.device_token;
+          localStorage.setItem('hzm_user_token', currentToken);
+          closeModal('joinModal');
+          document.getElementById('joinCircleCode').value = '';
+          currentCircleId = quickData.circle.id;
+          await loadUserData();
+          alert(`🎉 欢迎加入！\n已成功以「${quickData.user.nickname}」身份加入圈子！`);
+          return;
+        }
+      }
+      return;
+    }
+
     if (data.success) {
       closeModal('joinModal');
       document.getElementById('joinCircleCode').value = '';
       currentCircleId = data.circle.id;
       await loadUserData();
+      alert(data.message);
+    } else {
+      alert(data.message || '加入失败');
     }
   } catch (err) {
-    alert('加入失败');
+    alert('网络请求失败');
+  }
+}
+
+function switchOrResetAccount() {
+  if (confirm('确定要退出当前身份吗？\n退出后可重新新建或绑定专属成员账号。')) {
+    localStorage.removeItem('hzm_user_token');
+    window.location.href = window.location.pathname;
   }
 }
 
