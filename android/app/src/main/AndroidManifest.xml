@@ -21,7 +21,7 @@
         android:label="活着么·守护伴侣"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
-        android:theme="@style/Theme.MaterialComponents.DayNight.NoActionBar"
+        android:theme="@style/Theme.Huozheme"
         android:usesCleartextTraffic="true">
 
         <!-- 首次绑定设置主界面 -->
@@ -34,7 +34,7 @@
             </intent-filter>
         </activity>
 
-        <!-- 核心监听器：手机解锁广播 (USER_PRESENT) -->
+        <!-- 核心监听器：手机解锁与充电广播 (USER_PRESENT / POWER_CONNECTED) -->
         <receiver
             android:name=".receiver.UnlockReceiver"
             android:enabled="true"
@@ -42,6 +42,8 @@
             <intent-filter>
                 <!-- 屏幕解锁成功广播 -->
                 <action android:name="android.intent.action.USER_PRESENT" />
+                <!-- 插上电源/开始充电广播 -->
+                <action android:name="android.intent.action.ACTION_POWER_CONNECTED" />
             </intent-filter>
         </receiver>
 

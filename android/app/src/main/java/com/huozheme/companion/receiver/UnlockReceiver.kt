@@ -28,15 +28,17 @@ class UnlockReceiver : BroadcastReceiver() {
     }
 
     override fun onReceive(context: Context, intent: Intent) {
-        if (Intent.ACTION_USER_PRESENT != intent.action) {
+        val isUnlock = Intent.ACTION_USER_PRESENT == intent.action
+        val isPower = Intent.ACTION_POWER_CONNECTED == intent.action
+        if (!isUnlock && !isPower) {
             return
         }
 
-        Log.d(TAG, "检测到手机解锁事件 (ACTION_USER_PRESENT)!")
+        Log.d(TAG, "检测到平安信号 (解锁或充电触发: ${intent.action})!")
 
         val prefs = context.getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
         val token = prefs.getString(KEY_TOKEN, null)
-        val serverUrl = prefs.getString(KEY_SERVER, "http://10.0.2.2:3000") // 默认本地开发地址
+        val serverUrl = prefs.getString(KEY_SERVER, "https://huozheme-9yrv.onrender.com")
 
         if (token.isNullOrEmpty()) {
             Log.w(TAG, "尚未绑定用户 Token，忽略本次打卡")

@@ -40,7 +40,7 @@ class MainActivity : AppCompatActivity() {
         btnBattery = findViewById(R.id.btnBattery)
 
         val prefs = getSharedPreferences(UnlockReceiver.PREFS_NAME, Context.MODE_PRIVATE)
-        val savedServer = prefs.getString(UnlockReceiver.KEY_SERVER, "http://192.168.1.100:3000")
+        val savedServer = prefs.getString(UnlockReceiver.KEY_SERVER, "https://huozheme-9yrv.onrender.com")
         val savedToken = prefs.getString(UnlockReceiver.KEY_TOKEN, "")
 
         etServerUrl.setText(savedServer)
