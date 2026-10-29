@@ -30,6 +30,7 @@ app.get('/api/server-info', (req, res) => {
     }
   }
   res.json({
+    status: 'RUNNING',
     port: PORT,
     ip: localIp,
     mobileUrl: `http://${localIp}:${PORT}`
@@ -39,7 +40,7 @@ app.get('/api/server-info', (req, res) => {
 // --- Core Webhook: Daily Unlock Ping ---
 // Supports both GET and POST for iOS Shortcuts & Android Helper
 app.all('/api/v1/ping', (req, res) => {
-  const token = req.query.token || req.body.token || req.headers['x-device-token'];
+  const token = req.query?.token || req.body?.token || req.headers['x-device-token'];
   if (!token) {
     return res.status(400).json({ success: false, message: '缺少 token 参数' });
   }
@@ -92,7 +93,7 @@ app.get('/api/user/me', (req, res) => {
 
 // Create new user (e.g. from WeChat login simulation)
 app.post('/api/user/register', (req, res) => {
-  const { nickname, deviceType, alertTime } = req.body;
+  const { nickname, deviceType, alertTime } = req.body || {};
   if (!nickname) {
     return res.status(400).json({ success: false, message: '昵称不能为空' });
   }
@@ -102,14 +103,14 @@ app.post('/api/user/register', (req, res) => {
 
 // Quick guest user creation for new visitors
 app.post('/api/user/create-guest', (req, res) => {
-  const { deviceType, nickname } = req.body;
+  const { deviceType, nickname } = req.body || {};
   const user = services.createUser(nickname || '新成员', deviceType || 'ios');
   res.json({ success: true, user });
 });
 
 // Update user settings
 app.put('/api/user/profile', (req, res) => {
-  const { userId, nickname, alert_time, emergency_contact_name, emergency_contact_phone } = req.body;
+  const { userId, nickname, alert_time, emergency_contact_name, emergency_contact_phone } = req.body || {};
   if (!userId) {
     return res.status(400).json({ success: false, message: '缺少 userId' });
   }
@@ -130,7 +131,7 @@ app.get('/api/circles', (req, res) => {
 });
 
 app.post('/api/circles', (req, res) => {
-  const { userId, name } = req.body;
+  const { userId, name } = req.body || {};
   if (!userId || !name) {
     return res.status(400).json({ success: false, message: '缺少参数' });
   }
@@ -139,7 +140,7 @@ app.post('/api/circles', (req, res) => {
 });
 
 app.post('/api/circles/join', (req, res) => {
-  const { userId, code } = req.body;
+  const { userId, code } = req.body || {};
   if (!userId || !code) {
     return res.status(400).json({ success: false, message: '缺少参数' });
   }
@@ -149,7 +150,7 @@ app.post('/api/circles/join', (req, res) => {
 
 // Quick join with automatic new member profile creation
 app.post('/api/circles/quick-join', (req, res) => {
-  const { code, nickname, deviceType } = req.body;
+  const { code, nickname, deviceType } = req.body || {};
   if (!code) {
     return res.status(400).json({ success: false, message: '缺少邀请码' });
   }
